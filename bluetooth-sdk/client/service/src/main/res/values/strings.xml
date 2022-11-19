@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="client_service_name">BLE client service</string>
+    <string name="client_service_notification">Игра в прятки</string>
+</resources>

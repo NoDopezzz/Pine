@@ -1,0 +1,5 @@
+<resources>
+    <string name="error_screen_title">Произошла ошибка</string>
+    <string name="error_screen_retry_button">Повторить</string>
+    <string name="error_screen_back_button">В главное меню</string>
+</resources>

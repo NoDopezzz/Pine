@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialog_permission_location_title">Предоставьте разрешение на геолокацию</string>
+    <string name="dialog_permission_location_subtitle">Разрешение геолокации нужно для использования Bluetooth. Приложение не собирает никакой конфиденциальной информации, связанной с местоположением пользователей</string>
+
+    <string name="dialog_permission_bluetooth_title">Предоставьте разрешение на сканирование Bluetooth-устройств</string>
+    <string name="dialog_permission_bluetooth_subtitle">Сканирование ближайших Bluetooth устройств необходимо для полноценного функционирования приложения</string>
+
+    <string name="dialog_permission_camera_title">Предоставьте разрешение на открытие камеры</string>
+    <string name="dialog_permission_camera_subtitle">Функционал камеры необходим для правильной работы механики игры. Вы не сможете продолжить без предоставленного разрешения!</string>
+
+    <string name="positive_button_text">Ок</string>
+    <string name="negative_button_text">Отмена</string>
+</resources>
