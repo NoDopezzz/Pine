@@ -23,6 +23,8 @@ dependencies {
     implementation(Libraries.Compose.preview)
     debugImplementation(Libraries.Compose.debugPreview)
 
+    implementation(project(Project.Features.pineApi))
+
     implementation(project(Project.Features.mainApi))
     implementation(project(Project.Core.UI.compose))
     implementation(project(Project.Core.UI.button))
