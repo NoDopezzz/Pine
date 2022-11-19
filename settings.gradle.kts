@@ -22,6 +22,10 @@ rootProject.name = "Pine"
 include(
         ":app",
 
+        // Features
+        ":features:mainmenu:impl",
+        ":features:mainmenu:api",
+
         // Bluetooth-SDK
         ":bluetooth-sdk:scanner:api",
         ":bluetooth-sdk:scanner:impl",

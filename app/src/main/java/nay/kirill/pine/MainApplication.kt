@@ -7,6 +7,7 @@ import nay.kirill.bluetooth.scanner.impl.bluetoothScannerModule
 import nay.kirill.bluetooth.server.callback.serverCallbackModule
 import nay.kirill.core.ui.res.resourceModule
 import nay.kirill.pine.di.mainModule
+import nay.kirill.pine.mainmenu.impl.api.mainMenuModule
 import nay.kirill.pine.navigation.navigationModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -33,7 +34,10 @@ class MainApplication : Application() {
                 resourceModule,
                 clientManagerModule,
                 serverCallbackModule,
-                clientCallbackModule
+                clientCallbackModule,
+
+                // Features
+                mainMenuModule
         )
     }
 
