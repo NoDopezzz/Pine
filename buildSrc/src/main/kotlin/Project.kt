@@ -6,6 +6,10 @@ object Project {
 
         const val mainApi = ":features:mainmenu:api"
 
+        const val pineApi = ":features:pine:api"
+
+        const val pineImpl = ":features:pine:impl"
+
     }
 
     object Core {

@@ -25,6 +25,8 @@ include(
         // Features
         ":features:mainmenu:impl",
         ":features:mainmenu:api",
+        ":features:pine:impl",
+        ":features:pine:api",
 
         // Bluetooth-SDK
         ":bluetooth-sdk:scanner:api",
