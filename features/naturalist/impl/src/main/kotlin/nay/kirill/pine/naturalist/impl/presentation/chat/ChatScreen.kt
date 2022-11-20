@@ -1,6 +1,5 @@
 package nay.kirill.pine.naturalist.impl.presentation.chat
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -83,7 +82,6 @@ private fun Content(
                     modifier = Modifier.fillMaxWidth()
             ) {
                 state.messages.forEach {  message ->
-                    Log.i("ChatScreen", "Message: $message")
                     Text(text = message.text)
                 }
             }

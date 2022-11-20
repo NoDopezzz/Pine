@@ -1,7 +1,6 @@
 package nay.kirill.pine.naturalist.impl.presentation.connect
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
