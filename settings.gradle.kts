@@ -27,6 +27,8 @@ include(
         ":features:mainmenu:api",
         ":features:pine:impl",
         ":features:pine:api",
+        ":features:naturalist:impl",
+        ":features:naturalist:api",
 
         // Bluetooth-SDK
         ":bluetooth-sdk:scanner:api",

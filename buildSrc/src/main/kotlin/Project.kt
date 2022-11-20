@@ -10,6 +10,10 @@ object Project {
 
         const val pineImpl = ":features:pine:impl"
 
+        const val naturalistApi = ":features:naturalist:api"
+
+        const val naturalistImpl = ":features:naturalist:impl"
+
     }
 
     object Core {

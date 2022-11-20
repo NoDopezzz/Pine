@@ -8,6 +8,7 @@ import nay.kirill.bluetooth.server.callback.serverCallbackModule
 import nay.kirill.core.ui.res.resourceModule
 import nay.kirill.pine.di.mainModule
 import nay.kirill.pine.mainmenu.impl.api.mainMenuModule
+import nay.kirill.pine.naturalist.impl.api.naturalistModule
 import nay.kirill.pine.navigation.navigationModule
 import nay.kirill.pine.pine.impl.api.pineModule
 import org.koin.android.ext.koin.androidContext
@@ -39,7 +40,8 @@ class MainApplication : Application() {
 
                 // Features
                 mainMenuModule,
-                pineModule
+                pineModule,
+                naturalistModule
         )
     }
 

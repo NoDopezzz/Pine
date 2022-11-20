@@ -26,6 +26,7 @@ dependencies {
     implementation(project(Project.Features.mainImpl))
     implementation(project(Project.Features.pineApi))
     implementation(project(Project.Features.pineImpl))
+    implementation(project(Project.Features.naturalistImpl))
 
     implementation(project(Project.BluetoothSDK.scannerImpl))
     implementation(project(Project.BluetoothSDK.serverManager))
