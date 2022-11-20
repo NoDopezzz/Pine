@@ -5,5 +5,5 @@
 
     <string name="complete_button_title">Завершить</string>
 
-    <string name="error_description">Произошла ошибка при создании подключения. Проверьте предоставленные разрешения и включенную настройку Bluetooth</string>
+    <string name="error_description">Произошла ошибка при создании подключения. Проверьте предоставленные разрешения и настройки Bluetooth</string>
 </resources>

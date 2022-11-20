@@ -5,9 +5,9 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.supervisorScope
 import nay.kirill.bluetooth.client.exceptions.ClientException
-import nay.kirill.bluetooth.utils.CharacteristicConstants.CHARACTERISTIC_UUID
+import nay.kirill.bluetooth.utils.CharacteristicConstants.CHAT_CHARACTERISTIC_UUID
+import nay.kirill.bluetooth.utils.CharacteristicConstants.DEVICE_CHARACTERISTIC_UUID
 import nay.kirill.bluetooth.utils.CharacteristicConstants.SERVICE_UUID
 import no.nordicsemi.android.ble.BleManager
 import kotlin.coroutines.resume
@@ -18,15 +18,19 @@ class ClientManager(
         private val consumerCallback: ClientConsumerCallback
 ) : BleManager(appContext) {
 
-    private var characteristic: BluetoothGattCharacteristic? = null
+    private var chatCharacteristic: BluetoothGattCharacteristic? = null
+
+    private var deviceAddressCharacteristic: BluetoothGattCharacteristic? = null
 
     override fun getGattCallback() = object : BleManagerGattCallback() {
 
         override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
             val service = gatt.getService(SERVICE_UUID) ?: return false
 
-            characteristic = service.getCharacteristic(CHARACTERISTIC_UUID)
-            val properties = characteristic?.properties ?: 0
+            chatCharacteristic = service.getCharacteristic(CHAT_CHARACTERISTIC_UUID)
+            val properties = chatCharacteristic?.properties ?: 0
+
+            deviceAddressCharacteristic = service.getCharacteristic(DEVICE_CHARACTERISTIC_UUID)
 
             return (properties and BluetoothGattCharacteristic.PROPERTY_READ != 0) &&
                     (properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0)
@@ -34,21 +38,38 @@ class ClientManager(
 
         override fun onServicesInvalidated() {
             consumerCallback.onFailure(ClientException.ServiceInvalidated())
-            characteristic = null
+            chatCharacteristic = null
+            deviceAddressCharacteristic = null
         }
 
         override fun initialize() {
             requestMtu(517).enqueue()
 
-            setNotificationCallback(characteristic).with { device, data ->
+            setNotificationCallback(chatCharacteristic).with { device, data ->
                 if (data.value != null) {
-                    updateDeviceAddress(data.value!!)
                     consumerCallback.onNewMessage(device, data.value!!)
                 }
             }
 
+            setNotificationCallback(deviceAddressCharacteristic).with { device, data ->
+                if (data.value != null) updateDeviceAddress(data.value!!)
+            }
+
             beginAtomicRequestQueue()
-                    .add(enableNotifications(characteristic)
+                    .add(enableNotifications(deviceAddressCharacteristic)
+                            .fail { _: BluetoothDevice?, status: Int ->
+                                Log.i("ClientManager", "Failed to enable notifications: $status")
+                                consumerCallback.onFailure(ClientException.ConnectionException(status))
+                                disconnect().enqueue()
+                            }
+                    )
+                    .fail { _, _ ->
+                        consumerCallback.onFailure(ClientException.UnknownException())
+                    }
+                    .enqueue()
+
+            beginAtomicRequestQueue()
+                    .add(enableNotifications(chatCharacteristic)
                             .fail { _: BluetoothDevice?, status: Int ->
                                 consumerCallback.onFailure(ClientException.ConnectionException(status))
                                 disconnect().enqueue()
@@ -84,7 +105,7 @@ class ClientManager(
     }
 
     suspend fun readMessages(): Result<ByteArray?> = suspendCoroutine { continuation ->
-        readCharacteristic(characteristic)
+        readCharacteristic(chatCharacteristic)
                 .with { _, data ->
                     continuation.resume(Result.success(data.value))
                 }
@@ -95,7 +116,7 @@ class ClientManager(
     }
 
     suspend fun sendMessage(message: ByteArray): Result<Boolean> = suspendCoroutine { continuation ->
-        writeCharacteristic(characteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+        writeCharacteristic(chatCharacteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
                 .done {
                     continuation.resume(Result.success(true))
                 }

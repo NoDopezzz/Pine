@@ -7,12 +7,6 @@ interface ServerConsumerCallback {
 
     fun onNewMessage(device: BluetoothDevice, message: ByteArray, deviceCount: Int)
 
-    fun onNewDeviceConnected(device: BluetoothDevice, deviceCount: Int)
-
-    fun onDeviceDisconnected(device: BluetoothDevice, deviceCount: Int)
-
-    fun onServerReady()
-
     fun onFailure(throwable: ServerException)
 
 }

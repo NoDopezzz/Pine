@@ -39,6 +39,7 @@ internal class ChatViewModel(
         }
 
         override fun onFailure(throwable: ClientException) {
+            Log.i("ChatViewModel", "throwable: $throwable")
             onError()
         }
 
@@ -51,6 +52,7 @@ internal class ChatViewModel(
             clientManager.connectWithServer(device = args.device)
                     .onFailure {
                         state = ChatState.Error
+                        Log.i("ChatViewModel", "readMessage: $it")
                     }
 
             clientManager.readMessages()
@@ -59,6 +61,10 @@ internal class ChatViewModel(
                                 messages = data.toMessages(),
                                 enteredMessage = ""
                         )
+                    }
+                    .onFailure {
+                        Log.i("ChatViewModel", "readMessage: $it")
+                        state = ChatState.Error
                     }
         }
     }

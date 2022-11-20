@@ -11,8 +11,8 @@ import com.github.terrakok.cicerone.androidx.FragmentScreen
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import nay.kirill.bluetooth.utils.DataStoreKey
-import nay.kirill.bluetooth.utils.dataStore
+import nay.kirill.bluetooth.server.service.ServerDataStoreKey
+import nay.kirill.bluetooth.server.service.serverDataStore
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -44,8 +44,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         navigatorHolder.setNavigator(navigator)
 
-        dataStore.data
-                .map { it[DataStoreKey.IS_SERVER_RUNNING] }
+        serverDataStore.data
+                .map { it[ServerDataStoreKey.IS_SERVER_RUNNING] }
                 .onEach {
                     when {
                         supportFragmentManager.findFragmentById(R.id.main_container) == null && it ?: false -> viewModel.openPine()

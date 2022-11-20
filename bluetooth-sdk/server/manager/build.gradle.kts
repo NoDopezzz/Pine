@@ -13,6 +13,7 @@ android {
 dependencies {
     implementation(Libraries.Bluetooth.nordic)
     implementation(Libraries.Koin.koinAndroid)
+    implementation(Libraries.DataStore.dataStore)
 
     implementation(project(Project.BluetoothSDK.utils))
     implementation(project(Project.BluetoothSDK.serverExceptions))

@@ -6,9 +6,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import android.util.Log
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nay.kirill.bluetooth.server.exceptions.ServerException
@@ -23,7 +21,7 @@ class ServerManager(
 ) : BleServerManager(context), ServerObserver {
 
     private val gattCharacteristic = sharedCharacteristic(
-            CharacteristicConstants.CHARACTERISTIC_UUID,
+            CharacteristicConstants.CHAT_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_READ
                     or BluetoothGattCharacteristic.PROPERTY_WRITE
                     or BluetoothGattCharacteristic.PROPERTY_NOTIFY,
@@ -33,12 +31,26 @@ class ServerManager(
                     BluetoothGattDescriptor.PERMISSION_READ
                             or BluetoothGattDescriptor.PERMISSION_WRITE, byteArrayOf(0, 0)
             ),
-            description("A characteristic to be read", true) // descriptors
+            description("A characteristic of chat messages", true) // descriptors
+    )
+
+    private val deviceAddressCharacteristic = sharedCharacteristic(
+            CharacteristicConstants.DEVICE_CHARACTERISTIC_UUID,
+            BluetoothGattCharacteristic.PROPERTY_READ
+                    or BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+            BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE,
+            descriptor(
+                    CharacteristicConstants.CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID,
+                    BluetoothGattDescriptor.PERMISSION_READ
+                            or BluetoothGattDescriptor.PERMISSION_WRITE, byteArrayOf(0, 0)
+            ),
+            description("A characteristic for transferring device address", true) // descriptors
     )
 
     private val gattService = service(
             CharacteristicConstants.SERVICE_UUID,
-            gattCharacteristic
+            gattCharacteristic,
+            deviceAddressCharacteristic
     )
 
     private val serverConnections = mutableMapOf<String, DeviceConnectionManager>()
@@ -50,7 +62,7 @@ class ServerManager(
     }
 
     override fun onServerReady() {
-        consumerCallback.onServerReady()
+
     }
 
     override fun onDeviceConnectedToServer(device: BluetoothDevice) {
@@ -63,13 +75,11 @@ class ServerManager(
                                 consumerCallback.onFailure(ServerException.DeviceConnectionException(status))
                             }
                             .done { connectedDevice ->
-                                consumerCallback.onNewDeviceConnected(connectedDevice, serverConnections.size + 1)
-
                                 // Pretty dumb huck of delaying sending message containing device address
                                 // At that time client is able to enable notification
                                 GlobalScope.launch {
                                     delay(2000)
-                                    sendMessage("address${device.address}".toByteArray(), gattCharacteristic)
+                                    sendMessage("address${device.address}".toByteArray(), deviceAddressCharacteristic)
                                 }
                             }
                             .enqueue()
@@ -77,8 +87,6 @@ class ServerManager(
     }
 
     override fun onDeviceDisconnectedFromServer(device: BluetoothDevice) {
-        consumerCallback.onDeviceDisconnected(device, serverConnections.size - 1)
-
         serverConnections.remove(device.address)?.close()
     }
 

@@ -27,8 +27,6 @@ import nay.kirill.bluetooth.server.callback.message.ServerMessageCallback
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.server.impl.ServerConsumerCallback
 import nay.kirill.bluetooth.server.impl.ServerManager
-import nay.kirill.bluetooth.utils.DataStoreKey
-import nay.kirill.bluetooth.utils.dataStore
 import nay.kirill.core.utils.permissions.PermissionsUtils
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.CoroutineContext
@@ -52,20 +50,8 @@ class BleServerService : Service(), CoroutineScope {
 
     private val consumerCallback = object : ServerConsumerCallback {
 
-        override fun onNewDeviceConnected(device: BluetoothDevice, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnDeviceConnected(device, deviceCount))
-        }
-
-        override fun onDeviceDisconnected(device: BluetoothDevice, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnDeviceDisconnected(device,deviceCount))
-        }
-
-        override fun onServerReady() {
-            serverEventCallback.setResult(ServerEvent.OnServerIsReady)
-        }
-
         override fun onNewMessage(device: BluetoothDevice, message: ByteArray, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnNewMessage(Message.fromByteArray(message), device, deviceCount))
+            saveChatMessages(message)
         }
 
         override fun onFailure(throwable: ServerException) {
@@ -80,8 +66,8 @@ class BleServerService : Service(), CoroutineScope {
         super.onCreate()
 
         launch {
-            dataStore.edit { settings ->
-                settings[DataStoreKey.IS_SERVER_RUNNING] = true
+            serverDataStore.edit { settings ->
+                settings[ServerDataStoreKey.IS_SERVER_RUNNING] = true
             }
         }
     }
@@ -126,8 +112,8 @@ class BleServerService : Service(), CoroutineScope {
 
         // Need to prevent cancelling children before config change
         runBlocking {
-            dataStore.edit { settings ->
-                settings[DataStoreKey.IS_SERVER_RUNNING] = false
+            serverDataStore.edit { settings ->
+                settings[ServerDataStoreKey.IS_SERVER_RUNNING] = false
             }
         }
 
@@ -152,6 +138,14 @@ class BleServerService : Service(), CoroutineScope {
             serverEventCallback.setResult(ServerEvent.OnFatalException(ServerException.UnknownException(e.message)))
 
             stopSelf()
+        }
+    }
+
+    private fun saveChatMessages(value: ByteArray) {
+        launch {
+            serverDataStore.edit { pref ->
+                pref[ServerDataStoreKey.CHAT_MESSAGES] = String(value)
+            }
         }
     }
 
