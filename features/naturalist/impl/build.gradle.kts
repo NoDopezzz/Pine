@@ -46,9 +46,7 @@ dependencies {
     implementation(project(Project.Core.Utils.permissions))
 
     implementation(project(Project.BluetoothSDK.scannerApi))
-    implementation(project(Project.BluetoothSDK.clientService))
     implementation(project(Project.BluetoothSDK.clientManager))
-    implementation(project(Project.BluetoothSDK.clientCallback))
     implementation(project(Project.BluetoothSDK.clientExceptions))
     implementation(project(Project.BluetoothSDK.messages))
 

@@ -1,7 +1,6 @@
 package nay.kirill.pine
 
 import android.app.Application
-import nay.kirill.bluetooth.client.callback.clientCallbackModule
 import nay.kirill.bluetooth.client.clientManagerModule
 import nay.kirill.bluetooth.scanner.impl.bluetoothScannerModule
 import nay.kirill.bluetooth.server.callback.serverCallbackModule
@@ -36,7 +35,6 @@ class MainApplication : Application() {
                 resourceModule,
                 clientManagerModule,
                 serverCallbackModule,
-                clientCallbackModule,
 
                 // Features
                 mainMenuModule,
