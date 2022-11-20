@@ -1,12 +1,18 @@
 package nay.kirill.pine
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.lifecycleScope
 import com.github.terrakok.cicerone.NavigatorHolder
 import com.github.terrakok.cicerone.androidx.AppNavigator
 import com.github.terrakok.cicerone.androidx.FragmentScreen
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import nay.kirill.bluetooth.utils.DataStoreKey
+import nay.kirill.bluetooth.utils.dataStore
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -38,9 +44,16 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         navigatorHolder.setNavigator(navigator)
 
-        if (supportFragmentManager.findFragmentById(R.id.main_container) == null) {
-            viewModel.openMain()
-        }
+        dataStore.data
+                .map { it[DataStoreKey.IS_SERVER_RUNNING] }
+                .onEach {
+                    when {
+                        supportFragmentManager.findFragmentById(R.id.main_container) == null && it ?: false -> viewModel.openMain()
+                        supportFragmentManager.findFragmentById(R.id.main_container) == null -> viewModel.openMain()
+                        else -> Unit
+                    }
+                }
+                .launchIn(lifecycleScope)
     }
 
     override fun onPause() {

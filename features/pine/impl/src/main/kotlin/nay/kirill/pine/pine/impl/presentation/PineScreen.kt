@@ -25,10 +25,27 @@ import nay.kirill.core.button.AppButtonState
 import nay.kirill.core.compose.AppColors
 import nay.kirill.core.compose.AppTextStyle
 import nay.kirill.core.topbar.AppTopBar
+import nay.kirill.core.ui.error.AppError
 import nay.kirill.pine.pine.impl.R
 
 @Composable
 internal fun PineScreen(
+        state: PineState,
+        onComplete: () -> Unit,
+        onRetry: () -> Unit
+) {
+    when (state) {
+        is PineState.Content -> Content(onComplete)
+        is PineState.Error -> AppError(
+                errorDescription = stringResource(id = R.string.error_description),
+                backAction = onComplete,
+                retryAction = onRetry
+        )
+    }
+}
+
+@Composable
+private fun Content(
         onComplete: () -> Unit
 ) {
     Scaffold(
@@ -77,6 +94,8 @@ internal fun PineScreen(
 @Composable
 private fun PineScreenPreview() {
     PineScreen(
-            onComplete = {}
+            state = PineState.Content,
+            onComplete = {},
+            onRetry = {}
     )
 }

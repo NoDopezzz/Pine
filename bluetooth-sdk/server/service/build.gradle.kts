@@ -21,4 +21,5 @@ dependencies {
 
     implementation(Libraries.Bluetooth.nordic)
     implementation(Libraries.Koin.koinAndroid)
+    implementation(Libraries.DataStore.dataStore)
 }

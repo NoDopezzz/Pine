@@ -11,11 +11,14 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import nay.kirill.bluetooth.messages.Message
 import nay.kirill.bluetooth.server.callback.event.ServerEvent
 import nay.kirill.bluetooth.server.callback.event.ServerEventCallback
@@ -24,6 +27,8 @@ import nay.kirill.bluetooth.server.callback.message.ServerMessageCallback
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.server.impl.ServerConsumerCallback
 import nay.kirill.bluetooth.server.impl.ServerManager
+import nay.kirill.bluetooth.utils.DataStoreKey
+import nay.kirill.bluetooth.utils.dataStore
 import nay.kirill.core.utils.permissions.PermissionsUtils
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.CoroutineContext
@@ -71,17 +76,25 @@ class BleServerService : Service(), CoroutineScope {
 
     private val bleAdvertiseCallback = BleAdvertiser.Callback()
 
+    override fun onCreate() {
+        super.onCreate()
+
+        launch {
+            dataStore.edit { settings ->
+                settings[DataStoreKey.IS_SERVER_RUNNING] = true
+            }
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val notificationChannel = NotificationChannel(
-                    BleServerService::class.java.simpleName,
-                    resources.getString(R.string.server_service_name),
-                    NotificationManager.IMPORTANCE_DEFAULT
-            )
-            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                    .createNotificationChannel(notificationChannel)
-        }
+        val notificationChannel = NotificationChannel(
+                BleServerService::class.java.simpleName,
+                resources.getString(R.string.server_service_name),
+                NotificationManager.IMPORTANCE_DEFAULT
+        )
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .createNotificationChannel(notificationChannel)
 
         val notification = NotificationCompat.Builder(this, BleServerService::class.java.simpleName)
                 .setContentTitle(resources.getString(R.string.server_service_name))
@@ -110,6 +123,13 @@ class BleServerService : Service(), CoroutineScope {
 
     override fun onDestroy() {
         stopServerService()
+
+        // Need to prevent cancelling children before config change
+        runBlocking {
+            dataStore.edit { settings ->
+                settings[DataStoreKey.IS_SERVER_RUNNING] = false
+            }
+        }
 
         coroutineContext.cancelChildren()
         super.onDestroy()

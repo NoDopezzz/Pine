@@ -25,8 +25,15 @@ dependencies {
     implementation(Libraries.Compose.preview)
     debugImplementation(Libraries.Compose.debugPreview)
 
+    implementation(project(Project.BluetoothSDK.serverService))
+    implementation(project(Project.BluetoothSDK.serverExceptions))
+    implementation(project(Project.BluetoothSDK.serverCallback))
+
+    implementation(project(Project.Core.arch))
     implementation(project(Project.Core.UI.compose))
     implementation(project(Project.Core.UI.button))
     implementation(project(Project.Core.UI.topbar))
+    implementation(project(Project.Core.UI.error))
     implementation(project(Project.Core.Utils.permissions))
+    implementation(project(Project.Core.Utils.callbackFlow))
 }

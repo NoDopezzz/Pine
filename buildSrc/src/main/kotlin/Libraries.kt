@@ -120,6 +120,12 @@ object Libraries {
 
     }
 
+    object DataStore {
+
+        const val dataStore = "androidx.datastore:datastore-preferences:1.0.0"
+
+    }
+
     const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
 
 }
