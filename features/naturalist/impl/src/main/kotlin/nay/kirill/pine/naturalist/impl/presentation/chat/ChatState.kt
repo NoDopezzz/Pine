@@ -29,7 +29,8 @@ internal sealed interface ChatState {
 internal sealed interface ChatUiState {
 
     data class Content(
-            val enteredMessage: String = ""
+            val enteredMessage: String = "",
+            val messages: List<ChatMessage>
     ) : ChatUiState
 
     object Loading: ChatUiState

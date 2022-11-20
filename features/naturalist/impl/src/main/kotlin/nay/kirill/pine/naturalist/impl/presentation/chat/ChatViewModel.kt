@@ -3,12 +3,23 @@ package nay.kirill.pine.naturalist.impl.presentation.chat
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.util.Log
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import nay.kirill.bluetooth.client.ClientConfig
 import nay.kirill.bluetooth.client.ClientConsumerCallback
 import nay.kirill.bluetooth.client.ClientManager
 import nay.kirill.bluetooth.client.exceptions.ClientException
 import nay.kirill.core.arch.BaseViewModel
+import nay.kirill.pine.naturalist.impl.domain.ChatMessage
+import nay.kirill.pine.naturalist.impl.domain.toByteArray
+import nay.kirill.pine.naturalist.impl.domain.toMessages
 import nay.kirill.pine.naturalist.impl.presentation.NaturalistNavigation
 import nay.kirill.pine.naturalist.impl.presentation.entername.EnterNameArgs
+import nay.kirill.pine.naturalist.impl.presentation.entername.UserDataStoreKey
+import nay.kirill.pine.naturalist.impl.presentation.entername.dataStore
 
 @SuppressLint("StaticFieldLeak") // Provide application context to viewModel
 internal class ChatViewModel(
@@ -36,16 +47,20 @@ internal class ChatViewModel(
     private val clientManager: ClientManager = ClientManager(context, callback)
 
     init {
-        clientManager.connect(args.device)
-                .retry(4, 150)
-                .useAutoConnect(false)
-                .done {
-                    state = ChatState.Content.initial()
-                }
-                .fail { _, status ->
-                    onError()
-                }
-                .enqueue()
+        viewModelScope.launch {
+            clientManager.connectWithServer(device = args.device)
+                    .onFailure {
+                        state = ChatState.Error
+                    }
+
+            clientManager.readMessages()
+                    .onSuccess { data ->
+                        state = ChatState.Content(
+                                messages = data.toMessages(),
+                                enteredMessage = ""
+                        )
+                    }
+        }
     }
 
     private fun onError() {
@@ -70,7 +85,24 @@ internal class ChatViewModel(
     }
 
     fun sendMessage() {
-        state = successState { copy(enteredMessage = "") }
+        if ((state as? ChatState.Content)?.enteredMessage.isNullOrEmpty()) return
+
+        viewModelScope.launch {
+            (state as? ChatState.Content)?.let { contentState ->
+                val updatedMessages = contentState.messages.plus(ChatMessage(
+                        deviceAddress = ClientConfig.deviceAddress.orEmpty(),
+                        text = contentState.enteredMessage,
+                        name = context.dataStore.data.map { it[UserDataStoreKey.USER_NAME] }.firstOrNull()
+                ))
+
+                clientManager.sendMessage(updatedMessages.toByteArray())
+
+                state = contentState.copy(
+                        messages = updatedMessages,
+                        enteredMessage = ""
+                )
+            }
+        }
     }
 
     override fun onCleared() {

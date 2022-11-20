@@ -113,7 +113,6 @@ class ServerManager(
                     }
                 }
             }
-
         }
 
         fun sendMessage(value: ByteArray, characteristic: BluetoothGattCharacteristic) {

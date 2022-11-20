@@ -6,6 +6,10 @@ sealed class ClientException : Throwable() {
 
     class ConnectionException(val status: Int) : ClientException()
 
+    class ReadCharacteristicException(val status: Int) : ClientException()
+
+    class WriteCharacteristicException(val status: Int) : ClientException()
+
     class ServiceInvalidated() : ClientException()
 
     class UnknownException() : ClientException()

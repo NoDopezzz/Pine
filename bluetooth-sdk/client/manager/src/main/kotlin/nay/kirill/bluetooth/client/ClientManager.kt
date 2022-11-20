@@ -5,10 +5,13 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.supervisorScope
 import nay.kirill.bluetooth.client.exceptions.ClientException
 import nay.kirill.bluetooth.utils.CharacteristicConstants.CHARACTERISTIC_UUID
 import nay.kirill.bluetooth.utils.CharacteristicConstants.SERVICE_UUID
 import no.nordicsemi.android.ble.BleManager
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class ClientManager(
         appContext: Context,
@@ -67,7 +70,38 @@ class ClientManager(
         }
     }
 
-    fun sendMessage(message: ByteArray) {
-        writeCharacteristic(characteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT).enqueue()
+    suspend fun connectWithServer(device: BluetoothDevice): Result<BluetoothDevice> = suspendCoroutine { continuation ->
+        connect(device)
+                .retry(4, 150)
+                .useAutoConnect(false)
+                .done { connectedDevice ->
+                    continuation.resume(Result.success(connectedDevice))
+                }
+                .fail { _, status ->
+                    continuation.resume(Result.failure(ClientException.ConnectionException(status)))
+                }
+                .enqueue()
+    }
+
+    suspend fun readMessages(): Result<ByteArray?> = suspendCoroutine { continuation ->
+        readCharacteristic(characteristic)
+                .with { _, data ->
+                    continuation.resume(Result.success(data.value))
+                }
+                .fail { _, status ->
+                    continuation.resume(Result.failure(ClientException.ReadCharacteristicException(status)))
+                }
+                .enqueue()
+    }
+
+    suspend fun sendMessage(message: ByteArray): Result<Boolean> = suspendCoroutine { continuation ->
+        writeCharacteristic(characteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+                .done {
+                    continuation.resume(Result.success(true))
+                }
+                .fail { _, status ->
+                    continuation.resume(Result.failure(ClientException.WriteCharacteristicException(status)))
+                }
+                .enqueue()
     }
 }

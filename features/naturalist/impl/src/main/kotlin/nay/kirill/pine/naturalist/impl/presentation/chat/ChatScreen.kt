@@ -1,5 +1,6 @@
 package nay.kirill.pine.naturalist.impl.presentation.chat
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -72,12 +73,21 @@ private fun Content(
             topBar = {
                 AppTopBar(text = stringResource(id = R.string.chat_title))
             }
-    ) {
+    ) { it ->
         Column(
                 modifier = Modifier
                         .padding(bottom = it.calculateBottomPadding() + 18.dp)
                         .fillMaxHeight()
         ) {
+            Column(
+                    modifier = Modifier.fillMaxWidth()
+            ) {
+                state.messages.forEach {  message ->
+                    Log.i("ChatScreen", "Message: $message")
+                    Text(text = message.text)
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1F))
 
             OutlinedTextField(
@@ -195,7 +205,7 @@ internal class ChatStateProvider : PreviewParameterProvider<ChatUiState> {
     override val values: Sequence<ChatUiState> = sequenceOf(
             ChatUiState.Error,
             ChatUiState.Loading,
-            ChatUiState.Content(enteredMessage = "")
+            ChatUiState.Content(enteredMessage = "", messages = listOf())
     )
 
 }
