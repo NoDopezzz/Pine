@@ -6,9 +6,6 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.utils.CharacteristicConstants
 import no.nordicsemi.android.ble.BleManager
@@ -34,7 +31,7 @@ class ServerManager(
             description("A characteristic of chat messages", true) // descriptors
     )
 
-    private val deviceAddressCharacteristic = sharedCharacteristic(
+    private val changeNotifyCharacteristic = sharedCharacteristic(
             CharacteristicConstants.DEVICE_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_READ
                     or BluetoothGattCharacteristic.PROPERTY_NOTIFY,
@@ -50,7 +47,7 @@ class ServerManager(
     private val gattService = service(
             CharacteristicConstants.SERVICE_UUID,
             gattCharacteristic,
-            deviceAddressCharacteristic
+            changeNotifyCharacteristic
     )
 
     private val serverConnections = mutableMapOf<String, DeviceConnectionManager>()
@@ -74,14 +71,6 @@ class ServerManager(
                             .fail { _, status ->
                                 consumerCallback.onFailure(ServerException.DeviceConnectionException(status))
                             }
-                            .done { connectedDevice ->
-                                // Pretty dumb huck of delaying sending message containing device address
-                                // At that time client is able to enable notification
-                                GlobalScope.launch {
-                                    delay(2000)
-                                    sendMessage("address${device.address}".toByteArray(), deviceAddressCharacteristic)
-                                }
-                            }
                             .enqueue()
                 }
     }
@@ -90,12 +79,8 @@ class ServerManager(
         serverConnections.remove(device.address)?.close()
     }
 
-    fun sendMessage(message: ByteArray, deviceId: String?) {
-        if (deviceId == null) {
-            serverConnections.forEach { it.value.sendMessage(message, gattCharacteristic) }
-        } else {
-            serverConnections[deviceId]?.sendMessage(message, gattCharacteristic)
-        }
+    fun notifyUpdate() {
+        serverConnections.forEach { it.value.sendMessage("update".toByteArray(), changeNotifyCharacteristic) }
     }
 
     private inner class DeviceConnectionManager(
@@ -117,7 +102,7 @@ class ServerManager(
 
                 setWriteCallback(gattCharacteristic).with { device, data ->
                     if (data.value != null) {
-                        consumerCallback.onNewMessage(device, data.value!!, serverConnections.size)
+                        notifyUpdate()
                     }
                 }
             }

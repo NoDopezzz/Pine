@@ -15,15 +15,10 @@ import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import nay.kirill.bluetooth.messages.Message
 import nay.kirill.bluetooth.server.callback.event.ServerEvent
 import nay.kirill.bluetooth.server.callback.event.ServerEventCallback
-import nay.kirill.bluetooth.server.callback.message.ServerMessage
-import nay.kirill.bluetooth.server.callback.message.ServerMessageCallback
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.server.impl.ServerConsumerCallback
 import nay.kirill.bluetooth.server.impl.ServerManager
@@ -45,8 +40,6 @@ class BleServerService : Service(), CoroutineScope {
     private var serverManager: ServerManager? = null
 
     private val serverEventCallback: ServerEventCallback by inject()
-
-    private val serverMessageCallback: ServerMessageCallback by inject()
 
     private val consumerCallback = object : ServerConsumerCallback {
 
@@ -92,15 +85,6 @@ class BleServerService : Service(), CoroutineScope {
 
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         if (bluetoothManager.adapter?.isEnabled == true) startServerService()
-
-        serverMessageCallback.result
-                .onEach { msg ->
-                    when (msg) {
-                        is ServerMessage.WriteCharacteristic -> sendMessage(msg.message, msg.deviceAddress)
-                        else -> Unit
-                    }
-                }
-                .launchIn(this)
 
         return START_STICKY
     }
@@ -161,9 +145,5 @@ class BleServerService : Service(), CoroutineScope {
         } catch (e: Throwable) {
             serverEventCallback.setResult(ServerEvent.OnFatalException(ServerException.UnknownException(e.message)))
         }
-    }
-
-    private fun sendMessage(message: Message, deviceId: String?) {
-        serverManager?.sendMessage(Message.toByteArray(message), deviceId)
     }
 }
