@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
                 .map { it[DataStoreKey.IS_SERVER_RUNNING] }
                 .onEach {
                     when {
-                        supportFragmentManager.findFragmentById(R.id.main_container) == null && it ?: false -> viewModel.openMain()
+                        supportFragmentManager.findFragmentById(R.id.main_container) == null && it ?: false -> viewModel.openPine()
                         supportFragmentManager.findFragmentById(R.id.main_container) == null -> viewModel.openMain()
                         else -> Unit
                     }

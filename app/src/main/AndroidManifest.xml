@@ -35,7 +35,6 @@
         <service
             android:name="nay.kirill.bluetooth.server.service.BleServerService"
             android:description="@string/server_service_notification"
-            android:stopWithTask="true"
             android:exported="false" />
     </application>
 
