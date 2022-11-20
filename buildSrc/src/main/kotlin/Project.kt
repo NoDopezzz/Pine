@@ -6,6 +6,14 @@ object Project {
 
         const val mainApi = ":features:mainmenu:api"
 
+        const val pineApi = ":features:pine:api"
+
+        const val pineImpl = ":features:pine:impl"
+
+        const val naturalistApi = ":features:naturalist:api"
+
+        const val naturalistImpl = ":features:naturalist:impl"
+
     }
 
     object Core {
@@ -59,10 +67,6 @@ object Project {
         const val serverExceptions = ":bluetooth-sdk:server:exceptions"
 
         const val clientManager = ":bluetooth-sdk:client:manager"
-
-        const val clientService = ":bluetooth-sdk:client:service"
-
-        const val clientCallback = ":bluetooth-sdk:client:callback"
 
         const val clientExceptions = ":bluetooth-sdk:client:exceptions"
 

@@ -9,3 +9,7 @@ android {
             targetPackage = "nay.kirill.bluetooth.utils"
     )
 }
+
+dependencies {
+    implementation(Libraries.DataStore.dataStore)
+}

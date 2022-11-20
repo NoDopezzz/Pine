@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pine_title">Сосна</string>
+    <string name="pine_subtitle">Теперь спрячте телефон в укромном месте возле сосны. Устройство будет использоваться в качестве сервера для передачи сообщений между любителями природы</string>
+
+    <string name="complete_button_title">Завершить</string>
+
+    <string name="error_description">Произошла ошибка при создании подключения. Проверьте предоставленные разрешения и настройки Bluetooth</string>
+</resources>

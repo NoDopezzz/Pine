@@ -25,6 +25,10 @@ include(
         // Features
         ":features:mainmenu:impl",
         ":features:mainmenu:api",
+        ":features:pine:impl",
+        ":features:pine:api",
+        ":features:naturalist:impl",
+        ":features:naturalist:api",
 
         // Bluetooth-SDK
         ":bluetooth-sdk:scanner:api",
@@ -37,8 +41,6 @@ include(
         ":bluetooth-sdk:messages",
         ":bluetooth-sdk:client:manager",
         ":bluetooth-sdk:client:exceptions",
-        ":bluetooth-sdk:client:service",
-        ":bluetooth-sdk:client:callback",
 
         // Core
         ":core:ui:compose",

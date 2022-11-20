@@ -11,16 +11,14 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import nay.kirill.bluetooth.messages.Message
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import nay.kirill.bluetooth.server.callback.event.ServerEvent
 import nay.kirill.bluetooth.server.callback.event.ServerEventCallback
-import nay.kirill.bluetooth.server.callback.message.ServerMessage
-import nay.kirill.bluetooth.server.callback.message.ServerMessageCallback
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.server.impl.ServerConsumerCallback
 import nay.kirill.bluetooth.server.impl.ServerManager
@@ -43,25 +41,7 @@ class BleServerService : Service(), CoroutineScope {
 
     private val serverEventCallback: ServerEventCallback by inject()
 
-    private val serverMessageCallback: ServerMessageCallback by inject()
-
     private val consumerCallback = object : ServerConsumerCallback {
-
-        override fun onNewDeviceConnected(device: BluetoothDevice, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnDeviceConnected(device, deviceCount))
-        }
-
-        override fun onDeviceDisconnected(device: BluetoothDevice, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnDeviceDisconnected(device,deviceCount))
-        }
-
-        override fun onServerReady() {
-            serverEventCallback.setResult(ServerEvent.OnServerIsReady)
-        }
-
-        override fun onNewMessage(device: BluetoothDevice, message: ByteArray, deviceCount: Int) {
-            serverEventCallback.setResult(ServerEvent.OnNewMessage(Message.fromByteArray(message), device, deviceCount))
-        }
 
         override fun onFailure(throwable: ServerException) {
             serverEventCallback.setResult(ServerEvent.OnMinorException(throwable))
@@ -71,17 +51,25 @@ class BleServerService : Service(), CoroutineScope {
 
     private val bleAdvertiseCallback = BleAdvertiser.Callback()
 
+    override fun onCreate() {
+        super.onCreate()
+
+        launch {
+            serverDataStore.edit { settings ->
+                settings[ServerDataStoreKey.IS_SERVER_RUNNING] = true
+            }
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val notificationChannel = NotificationChannel(
-                    BleServerService::class.java.simpleName,
-                    resources.getString(R.string.server_service_name),
-                    NotificationManager.IMPORTANCE_DEFAULT
-            )
-            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                    .createNotificationChannel(notificationChannel)
-        }
+        val notificationChannel = NotificationChannel(
+                BleServerService::class.java.simpleName,
+                resources.getString(R.string.server_service_name),
+                NotificationManager.IMPORTANCE_DEFAULT
+        )
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .createNotificationChannel(notificationChannel)
 
         val notification = NotificationCompat.Builder(this, BleServerService::class.java.simpleName)
                 .setContentTitle(resources.getString(R.string.server_service_name))
@@ -94,15 +82,6 @@ class BleServerService : Service(), CoroutineScope {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         if (bluetoothManager.adapter?.isEnabled == true) startServerService()
 
-        serverMessageCallback.result
-                .onEach { msg ->
-                    when (msg) {
-                        is ServerMessage.WriteCharacteristic -> sendMessage(msg.message, msg.deviceAddress)
-                        else -> Unit
-                    }
-                }
-                .launchIn(this)
-
         return START_STICKY
     }
 
@@ -110,6 +89,13 @@ class BleServerService : Service(), CoroutineScope {
 
     override fun onDestroy() {
         stopServerService()
+
+        // Need to prevent cancelling children before config change
+        runBlocking {
+            serverDataStore.edit { settings ->
+                settings[ServerDataStoreKey.IS_SERVER_RUNNING] = false
+            }
+        }
 
         coroutineContext.cancelChildren()
         super.onDestroy()
@@ -147,9 +133,5 @@ class BleServerService : Service(), CoroutineScope {
         } catch (e: Throwable) {
             serverEventCallback.setResult(ServerEvent.OnFatalException(ServerException.UnknownException(e.message)))
         }
-    }
-
-    private fun sendMessage(message: Message, deviceId: String?) {
-        serverManager?.sendMessage(Message.toByteArray(message), deviceId)
     }
 }

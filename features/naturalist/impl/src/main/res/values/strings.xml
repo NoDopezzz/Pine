@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="connection_error_description">Произошла ошибка при подключении к сосне. Проверьте все предоставленные разрешения и включеную настройку Bluetoothю</string>
+    <string name="connection_title">Поиск сосны…</string>
+    <string name="connection_subtitle">Происходит поиск ближайшей сосны. Убедитесь, что находитесь недалеко от нее</string>
+
+    <string name="enter_name_title">Введите имя</string>
+    <string name="enter_name_subtitle">Это имя будет отображаться всем участникам переписки</string>
+
+    <string name="back_button_title">Назад</string>
+    <string name="continue_button_title">Продолжить</string>
+
+    <string name="enter_name_label">Введите имя</string>
+
+    <string name="chat_loading_title">Получение сообщений…</string>
+    <string name="chat_title">Любители природы</string>
+    <string name="edit_name_button">Изменить имя</string>
+    <string name="enter_name_input_label">Введите сообщение</string>
+</resources>

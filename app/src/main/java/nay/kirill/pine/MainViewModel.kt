@@ -9,4 +9,6 @@ internal class MainViewModel(
 
     fun openMain() = navigation.openMainMenu()
 
+    fun openPine() = navigation.openPine()
+
 }

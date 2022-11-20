@@ -78,7 +78,7 @@ object Libraries {
 
     object Bluetooth {
 
-        private const val version = "2.5.1"
+        private const val version = "2.6.0-alpha03"
 
         const val nordic = "no.nordicsemi.android:ble-ktx:$version"
 
@@ -117,6 +117,12 @@ object Libraries {
         const val zxing = "com.google.zxing:core:3.4.0"
 
         const val zxingEmbedded = "com.journeyapps:zxing-android-embedded:4.2.0"
+
+    }
+
+    object DataStore {
+
+        const val dataStore = "androidx.datastore:datastore-preferences:1.0.0"
 
     }
 
