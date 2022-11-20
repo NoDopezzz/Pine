@@ -6,6 +6,9 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.content.Context
+import nay.kirill.bluetooth.messages.toByteArray
+import nay.kirill.bluetooth.messages.toMessage
+import nay.kirill.bluetooth.messages.toMessages
 import nay.kirill.bluetooth.server.exceptions.ServerException
 import nay.kirill.bluetooth.utils.CharacteristicConstants
 import no.nordicsemi.android.ble.BleManager
@@ -17,7 +20,7 @@ class ServerManager(
         private val consumerCallback: ServerConsumerCallback
 ) : BleServerManager(context), ServerObserver {
 
-    private val gattCharacteristic = sharedCharacteristic(
+    private val chatCharacteristic = sharedCharacteristic(
             CharacteristicConstants.CHAT_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_READ
                     or BluetoothGattCharacteristic.PROPERTY_WRITE
@@ -31,8 +34,19 @@ class ServerManager(
             description("A characteristic of chat messages", true) // descriptors
     )
 
-    private val changeNotifyCharacteristic = sharedCharacteristic(
-            CharacteristicConstants.DEVICE_CHARACTERISTIC_UUID,
+    private val sendMessageCharacteristic = sharedCharacteristic(
+            CharacteristicConstants.SEND_MESSAGE_CHARACTERISTIC_UUID,
+                    BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE,
+            descriptor(
+                    CharacteristicConstants.CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID,
+                            BluetoothGattDescriptor.PERMISSION_WRITE, byteArrayOf(0, 0)
+            ),
+            description("A characteristic of chat messages", true) // descriptors
+    )
+
+    private val messageNotifyCharacteristic = sharedCharacteristic(
+            CharacteristicConstants.NOTIFY_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_READ
                     or BluetoothGattCharacteristic.PROPERTY_NOTIFY,
             BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE,
@@ -46,8 +60,9 @@ class ServerManager(
 
     private val gattService = service(
             CharacteristicConstants.SERVICE_UUID,
-            gattCharacteristic,
-            changeNotifyCharacteristic
+            chatCharacteristic,
+            messageNotifyCharacteristic,
+            sendMessageCharacteristic
     )
 
     private val serverConnections = mutableMapOf<String, DeviceConnectionManager>()
@@ -79,8 +94,8 @@ class ServerManager(
         serverConnections.remove(device.address)?.close()
     }
 
-    fun notifyUpdate() {
-        serverConnections.forEach { it.value.sendMessage("update".toByteArray(), changeNotifyCharacteristic) }
+    fun notifyUpdate(value: ByteArray) {
+        serverConnections.forEach { it.value.sendMessage(value, messageNotifyCharacteristic) }
     }
 
     private inner class DeviceConnectionManager(
@@ -100,9 +115,16 @@ class ServerManager(
             override fun initialize() {
                 requestMtu(517).enqueue()
 
-                setWriteCallback(gattCharacteristic).with { device, data ->
+                setWriteCallback(sendMessageCharacteristic).with { device, data ->
                     if (data.value != null) {
-                        notifyUpdate()
+                        val newMessage = data.value!!.toMessage()
+                        val updatedChat = when (chatCharacteristic.value) {
+                            null -> listOf(newMessage)
+                            else -> chatCharacteristic.value.toMessages().plus(newMessage)
+                        }
+                        chatCharacteristic.value = updatedChat.toByteArray()
+
+                        notifyUpdate(data.value!!)
                     }
                 }
             }

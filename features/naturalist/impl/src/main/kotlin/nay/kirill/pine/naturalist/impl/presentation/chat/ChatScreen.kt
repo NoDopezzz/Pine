@@ -7,14 +7,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldColors
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -39,6 +47,7 @@ import nay.kirill.core.compose.AppTextStyle
 import nay.kirill.core.topbar.AppTopBar
 import nay.kirill.core.ui.error.AppError
 import nay.kirill.pine.naturalist.impl.R
+import nay.kirill.pine.naturalist.impl.presentation.chat.models.ChatMessageUiModel
 
 @Composable
 internal fun ChatScreen(
@@ -78,15 +87,16 @@ private fun Content(
                         .padding(bottom = it.calculateBottomPadding() + 18.dp)
                         .fillMaxHeight()
         ) {
-            Column(
-                    modifier = Modifier.fillMaxWidth()
+            LazyColumn(
+                    modifier = Modifier
+                            .padding(top = 48.dp, start = 16.dp, end = 16.dp)
+                            .weight(1F),
+                    reverseLayout = true,
             ) {
-                state.messages.forEach {  message ->
-                    Text(text = message.text)
+                items(state.messages.reversed()) { message ->
+                    MessageCard(message)
                 }
             }
-
-            Spacer(modifier = Modifier.weight(1F))
 
             OutlinedTextField(
                     value = state.enteredMessage,
@@ -104,7 +114,7 @@ private fun Content(
                     },
                     trailingIcon = {
                         Image(
-                                painter = painterResource(id = androidx.appcompat.R.drawable.abc_ic_search_api_material),
+                                painter = painterResource(id = R.drawable.icon_send),
                                 contentDescription = "Отправить сообщение",
                                 modifier = Modifier
                                         .size(32.dp)
@@ -140,6 +150,50 @@ private fun Content(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun MessageCard(messageItem: ChatMessageUiModel) {
+    Column(
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalAlignment = when {
+                messageItem.isMine -> Alignment.End
+                else -> Alignment.Start
+            },
+    ) {
+        Card(
+                modifier = Modifier.widthIn(max = 340.dp),
+                shape = cardShapeFor(messageItem),
+                backgroundColor = when {
+                    messageItem.isMine -> MaterialTheme.colors.primary
+                    else -> MaterialTheme.colors.secondary
+                },
+        ) {
+            Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = messageItem.text,
+                    color = when {
+                        messageItem.isMine -> MaterialTheme.colors.onPrimary
+                        else -> MaterialTheme.colors.onSecondary
+                    },
+            )
+        }
+        Text(
+                text = messageItem.name.orEmpty(),
+                fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+fun cardShapeFor(message: ChatMessageUiModel): RoundedCornerShape {
+    val roundedCorners = RoundedCornerShape(16.dp)
+    return when {
+        message.isMine -> roundedCorners.copy(bottomEnd = CornerSize(0))
+        else -> roundedCorners.copy(bottomStart = CornerSize(0))
     }
 }
 

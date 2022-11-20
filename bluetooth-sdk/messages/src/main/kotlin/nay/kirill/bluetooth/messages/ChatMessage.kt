@@ -1,4 +1,4 @@
-package nay.kirill.pine.naturalist.impl.domain
+package nay.kirill.bluetooth.messages
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -20,5 +20,9 @@ fun ByteArray?.toMessages(): List<ChatMessage> = when {
         listOf()
     }
 }
+
+fun ByteArray.toMessage(): ChatMessage = Json.decodeFromString(String(this))
+
+fun ChatMessage.toByteArray(): ByteArray = Json.encodeToString(this).toByteArray()
 
 fun List<ChatMessage>.toByteArray(): ByteArray = Json.encodeToString(this).toByteArray()

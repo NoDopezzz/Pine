@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import nay.kirill.core.arch.BaseViewModel
 import nay.kirill.pine.naturalist.impl.presentation.NaturalistNavigation
 import nay.kirill.pine.naturalist.impl.presentation.chat.ChatArgs
+import java.util.UUID
 
 @SuppressLint("StaticFieldLeak") // Provide Application context to EnterNameViewModel
 internal class EnterNameViewModel(
@@ -29,6 +30,12 @@ internal class EnterNameViewModel(
         viewModelScope.launch {
             context.dataStore.edit { pref ->
                 pref[UserDataStoreKey.USER_NAME] = state.name
+            }
+
+            if (args is EnterNameArgs.NewName) {
+                context.dataStore.edit { pref ->
+                    pref[UserDataStoreKey.USER_ID] = UUID.randomUUID().toString()
+                }
             }
 
             withContext(Dispatchers.Main) {

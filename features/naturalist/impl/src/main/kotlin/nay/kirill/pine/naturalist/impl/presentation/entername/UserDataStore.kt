@@ -12,4 +12,6 @@ object UserDataStoreKey {
 
     val USER_NAME = stringPreferencesKey("USER_NAME")
 
+    val USER_ID = stringPreferencesKey("USER_ID")
+
 }

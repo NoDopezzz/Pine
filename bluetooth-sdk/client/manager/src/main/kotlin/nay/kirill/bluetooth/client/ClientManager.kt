@@ -4,12 +4,14 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import nay.kirill.bluetooth.client.exceptions.ClientException
 import nay.kirill.bluetooth.utils.CharacteristicConstants.CHAT_CHARACTERISTIC_UUID
-import nay.kirill.bluetooth.utils.CharacteristicConstants.DEVICE_CHARACTERISTIC_UUID
+import nay.kirill.bluetooth.utils.CharacteristicConstants.NOTIFY_CHARACTERISTIC_UUID
+import nay.kirill.bluetooth.utils.CharacteristicConstants.SEND_MESSAGE_CHARACTERISTIC_UUID
 import nay.kirill.bluetooth.utils.CharacteristicConstants.SERVICE_UUID
 import no.nordicsemi.android.ble.BleManager
 import kotlin.coroutines.resume
@@ -22,9 +24,11 @@ class ClientManager(
 
     private var chatCharacteristic: BluetoothGattCharacteristic? = null
 
-    private var updateNotifyCharacteristic: BluetoothGattCharacteristic? = null
+    private var notifyMessageCharacteristic: BluetoothGattCharacteristic? = null
 
-    private val readMessageFlow: MutableSharedFlow<Result<ByteArray?>> = MutableSharedFlow(
+    private var sendMessageCharacteristic: BluetoothGattCharacteristic? = null
+
+    private val readMessageFlow: MutableSharedFlow<ByteArray?> = MutableSharedFlow(
             replay = 1,
             extraBufferCapacity = 1
     )
@@ -37,45 +41,32 @@ class ClientManager(
             chatCharacteristic = service.getCharacteristic(CHAT_CHARACTERISTIC_UUID)
             val properties = chatCharacteristic?.properties ?: 0
 
-            updateNotifyCharacteristic = service.getCharacteristic(DEVICE_CHARACTERISTIC_UUID)
+            notifyMessageCharacteristic = service.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID)
 
-            return (properties and BluetoothGattCharacteristic.PROPERTY_READ != 0) &&
-                    (properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0)
+            sendMessageCharacteristic = service.getCharacteristic(SEND_MESSAGE_CHARACTERISTIC_UUID)
+
+            return properties and BluetoothGattCharacteristic.PROPERTY_READ != 0
         }
 
         override fun onServicesInvalidated() {
             consumerCallback.onFailure(ClientException.ServiceInvalidated())
             chatCharacteristic = null
-            updateNotifyCharacteristic = null
+            notifyMessageCharacteristic = null
+            sendMessageCharacteristic = null
         }
 
         override fun initialize() {
             requestMtu(517).enqueue()
 
-            setNotificationCallback(chatCharacteristic).with { device, data ->
+            setNotificationCallback(notifyMessageCharacteristic).with { device, data ->
                 if (data.value != null) {
-                    consumerCallback.onNewMessage(device, data.value!!)
+                    Log.i("ClientManager", "new data: ${String(data.value!!)}")
+                    readMessageFlow.tryEmit(data.value!!)
                 }
             }
 
-            setNotificationCallback(updateNotifyCharacteristic).with { device, data ->
-                readMessages()
-            }
-
             beginAtomicRequestQueue()
-                    .add(enableNotifications(updateNotifyCharacteristic)
-                            .fail { _: BluetoothDevice?, status: Int ->
-                                consumerCallback.onFailure(ClientException.ConnectionException(status))
-                                disconnect().enqueue()
-                            }
-                    )
-                    .fail { _, _ ->
-                        consumerCallback.onFailure(ClientException.UnknownException())
-                    }
-                    .enqueue()
-
-            beginAtomicRequestQueue()
-                    .add(enableNotifications(chatCharacteristic)
+                    .add(enableNotifications(notifyMessageCharacteristic)
                             .fail { _: BluetoothDevice?, status: Int ->
                                 consumerCallback.onFailure(ClientException.ConnectionException(status))
                                 disconnect().enqueue()
@@ -101,25 +92,22 @@ class ClientManager(
                 .enqueue()
     }
 
-    fun getMessageFlow(): Flow<Result<ByteArray?>> {
-        readMessages()
+    fun getMessageFlow(): Flow<ByteArray?> = readMessageFlow.asSharedFlow()
 
-        return readMessageFlow.asSharedFlow()
-    }
-
-    private fun readMessages() {
+    suspend fun readMessages(): Result<ByteArray?> = suspendCoroutine { continuation ->
         readCharacteristic(chatCharacteristic)
                 .with { _, data ->
-                    readMessageFlow.tryEmit(Result.success(data.value))
+                    continuation.resume(Result.success(data.value))
                 }
                 .fail { _, status ->
-                    readMessageFlow.tryEmit(Result.failure(ClientException.ReadCharacteristicException(status)))
+                    continuation.resume(Result.failure(ClientException.ReadCharacteristicException(status)))
                 }
                 .enqueue()
     }
 
     suspend fun sendMessage(message: ByteArray): Result<Boolean> = suspendCoroutine { continuation ->
-        writeCharacteristic(chatCharacteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+        writeCharacteristic(sendMessageCharacteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
+                .split()
                 .done {
                     continuation.resume(Result.success(true))
                 }

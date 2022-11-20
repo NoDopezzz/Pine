@@ -78,7 +78,7 @@ object Libraries {
 
     object Bluetooth {
 
-        private const val version = "2.5.1"
+        private const val version = "2.6.0-alpha03"
 
         const val nordic = "no.nordicsemi.android:ble-ktx:$version"
 

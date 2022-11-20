@@ -4,19 +4,20 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import nay.kirill.bluetooth.client.ClientConfig
 import nay.kirill.bluetooth.client.ClientConsumerCallback
 import nay.kirill.bluetooth.client.ClientManager
 import nay.kirill.bluetooth.client.exceptions.ClientException
+import nay.kirill.bluetooth.messages.ChatMessage
+import nay.kirill.bluetooth.messages.toByteArray
+import nay.kirill.bluetooth.messages.toMessage
+import nay.kirill.bluetooth.messages.toMessages
 import nay.kirill.core.arch.BaseViewModel
-import nay.kirill.pine.naturalist.impl.domain.ChatMessage
-import nay.kirill.pine.naturalist.impl.domain.toByteArray
-import nay.kirill.pine.naturalist.impl.domain.toMessages
 import nay.kirill.pine.naturalist.impl.presentation.NaturalistNavigation
 import nay.kirill.pine.naturalist.impl.presentation.entername.EnterNameArgs
 import nay.kirill.pine.naturalist.impl.presentation.entername.UserDataStoreKey
@@ -54,26 +55,27 @@ internal class ChatViewModel(
                         state = ChatState.Error
                     }
 
-            clientManager.getMessageFlow()
-                    .onEach { result ->
-                        result
-                                .onSuccess { data ->
-                                    when (state) {
-                                        is ChatState.Content -> state = successState { copy(messages = data.toMessages()) }
-                                        is ChatState.Loading -> state = ChatState.Content(
-                                                messages = data.toMessages(),
-                                                enteredMessage = ""
-                                        )
-                                        else -> Unit
-                                    }
-
-                                }
-                                .onFailure {
-                                    state = ChatState.Error
-                                }
+            clientManager.readMessages()
+                    .onSuccess { array ->
+                        state = ChatState.Content(
+                                messages = array.toMessages(),
+                                enteredMessage = "",
+                                deviceId = context.dataStore.data.map { it[UserDataStoreKey.USER_ID] }.firstOrNull().orEmpty()
+                        )
                     }
-                    .launchIn(viewModelScope)
+                    .onFailure {
+                        state = ChatState.Error
+                    }
         }
+
+        clientManager.getMessageFlow()
+                .filterNotNull()
+                .onEach { result ->
+                    state = successState {
+                        copy(messages = messages.plus(result.toMessage()))
+                    }
+                }
+                .launchIn(viewModelScope)
     }
 
     private fun onError() {
@@ -102,15 +104,13 @@ internal class ChatViewModel(
 
         viewModelScope.launch {
             (state as? ChatState.Content)?.let { contentState ->
-                val updatedMessages = contentState.messages.plus(
-                        ChatMessage(
-                                deviceAddress = ClientConfig.deviceAddress.orEmpty(),
-                                text = contentState.enteredMessage,
-                                name = context.dataStore.data.map { it[UserDataStoreKey.USER_NAME] }.firstOrNull()
-                        )
+                val message = ChatMessage(
+                        deviceAddress = context.dataStore.data.map { it[UserDataStoreKey.USER_ID] }.firstOrNull().orEmpty(),
+                        text = contentState.enteredMessage,
+                        name = context.dataStore.data.map { it[UserDataStoreKey.USER_NAME] }.firstOrNull()
                 )
 
-                clientManager.sendMessage(updatedMessages.toByteArray())
+                clientManager.sendMessage(message.toByteArray())
 
                 state = contentState.copy(enteredMessage = "")
             }

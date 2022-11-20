@@ -3,7 +3,6 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     id("kotlin-parcelize")
-    kotlin("plugin.serialization")
 }
 
 android {
@@ -20,7 +19,6 @@ dependencies {
     implementation(Libraries.DataStore.dataStore)
     implementation(Libraries.Compose.lottie)
     implementation(Libraries.Bluetooth.nordic)
-    implementation(Libraries.Utils.jsonSerialization)
 
     implementation(platform(Libraries.Compose.bom))
     implementation(Libraries.Compose.material)
