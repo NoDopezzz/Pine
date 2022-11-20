@@ -2,6 +2,8 @@ package nay.kirill.pine.naturalist.impl.api
 
 import nay.kirill.pine.naturalist.api.NaturalistApi
 import nay.kirill.pine.naturalist.impl.presentation.NaturalistNavigation
+import nay.kirill.pine.naturalist.impl.presentation.chat.ChatStateConverter
+import nay.kirill.pine.naturalist.impl.presentation.chat.ChatViewModel
 import nay.kirill.pine.naturalist.impl.presentation.connect.ConnectViewModel
 import nay.kirill.pine.naturalist.impl.presentation.entername.EnterNameViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -17,5 +19,10 @@ val naturalistModule = module {
     viewModelOf(::ConnectViewModel)
     viewModel { params ->
         EnterNameViewModel(params.get(), get(), get())
+    }
+
+    factoryOf(::ChatStateConverter)
+    viewModel { param ->
+        ChatViewModel(param.get(), get(), get(), get())
     }
 }

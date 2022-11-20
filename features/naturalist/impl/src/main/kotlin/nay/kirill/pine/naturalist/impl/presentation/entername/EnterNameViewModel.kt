@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nay.kirill.core.arch.BaseViewModel
 import nay.kirill.pine.naturalist.impl.presentation.NaturalistNavigation
+import nay.kirill.pine.naturalist.impl.presentation.chat.ChatArgs
 
 @SuppressLint("StaticFieldLeak") // Provide Application context to EnterNameViewModel
 internal class EnterNameViewModel(
@@ -32,7 +33,7 @@ internal class EnterNameViewModel(
 
             withContext(Dispatchers.Main) {
                 when (args) {
-                    is EnterNameArgs.NewName -> navigation.openChat()
+                    is EnterNameArgs.NewName -> navigation.openChat(args = ChatArgs(args.device))
                     is EnterNameArgs.Edit -> navigation.back()
                 }
             }

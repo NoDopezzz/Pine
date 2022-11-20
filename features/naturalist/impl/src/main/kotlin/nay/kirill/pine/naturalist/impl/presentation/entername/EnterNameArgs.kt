@@ -1,5 +1,6 @@
 package nay.kirill.pine.naturalist.impl.presentation.entername
 
+import android.bluetooth.BluetoothDevice
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
@@ -10,6 +11,6 @@ sealed interface EnterNameArgs : Parcelable {
     object Edit : EnterNameArgs
 
     @Parcelize
-    data class NewName(val deviceAddress: String) : EnterNameArgs
+    data class NewName(val device: BluetoothDevice) : EnterNameArgs
 
 }

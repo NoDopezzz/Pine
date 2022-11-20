@@ -74,7 +74,7 @@ private fun Content(
             Spacer(modifier = Modifier.weight(1F))
             LoadingView(
                     modifier = Modifier
-                            .width(300.dp)
+                            .width(400.dp)
                             .align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.weight(1F))

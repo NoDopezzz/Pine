@@ -18,6 +18,7 @@ dependencies {
     implementation(Libraries.Koin.koinAndroid)
     implementation(Libraries.DataStore.dataStore)
     implementation(Libraries.Compose.lottie)
+    implementation(Libraries.Bluetooth.nordic)
 
     implementation(platform(Libraries.Compose.bom))
     implementation(Libraries.Compose.material)
