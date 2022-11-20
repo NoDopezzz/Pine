@@ -43,10 +43,6 @@ class BleServerService : Service(), CoroutineScope {
 
     private val consumerCallback = object : ServerConsumerCallback {
 
-        override fun onNewMessage(device: BluetoothDevice, message: ByteArray, deviceCount: Int) {
-            saveChatMessages(message)
-        }
-
         override fun onFailure(throwable: ServerException) {
             serverEventCallback.setResult(ServerEvent.OnMinorException(throwable))
         }
@@ -122,14 +118,6 @@ class BleServerService : Service(), CoroutineScope {
             serverEventCallback.setResult(ServerEvent.OnFatalException(ServerException.UnknownException(e.message)))
 
             stopSelf()
-        }
-    }
-
-    private fun saveChatMessages(value: ByteArray) {
-        launch {
-            serverDataStore.edit { pref ->
-                pref[ServerDataStoreKey.CHAT_MESSAGES] = String(value)
-            }
         }
     }
 

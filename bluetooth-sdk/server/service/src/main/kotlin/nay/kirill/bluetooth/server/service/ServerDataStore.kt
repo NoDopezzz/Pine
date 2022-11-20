@@ -11,8 +11,6 @@ val Context.serverDataStore: DataStore<Preferences> by preferencesDataStore(name
 
 object ServerDataStoreKey {
 
-    val CHAT_MESSAGES = stringPreferencesKey("CHAT_MESSAGES")
-
     val IS_SERVER_RUNNING = booleanPreferencesKey("IS_SERVER_RUNNING")
 
 }
